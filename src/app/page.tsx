@@ -16,6 +16,7 @@ import { notFound } from "next/navigation";
 
 import { BeforeAfterSlider } from "@/components/public/before-after-slider";
 import { FaqAccordion } from "@/components/public/faq-accordion";
+import { MobileMenu } from "@/components/public/mobile-menu";
 import {
   Gallery,
   type PublicGalleryItem,
@@ -534,80 +535,84 @@ export default async function Home() {
       />
 
       {/* NAVBAR */}
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)] shadow-sm">
-        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-5 px-6">
-          <a
-            href="#topo"
-            aria-label={`Ir para o início do site da ${company}`}
-            className="shrink-0"
-          >
-            {settings?.logo_light_url ? (
-              <Image
-                src={
-                  settings.logo_light_url
-                }
-                alt={company}
-                width={150}
-                height={60}
-                className="h-11 w-auto object-contain sm:h-12"
-              />
-            ) : (
-              <strong className="text-lg text-[var(--surface-foreground)]">
-                {company}
-              </strong>
-            )}
-          </a>
-
-          <nav className="hidden items-center gap-7 text-sm font-semibold text-[var(--surface-foreground)] lg:flex">
+        <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)] shadow-sm">
+          <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-5 px-6">
             <a
-              href="#servicos"
-              className="transition hover:text-[var(--accent)]"
+              href="#topo"
+              aria-label={`Ir para o início do site da ${company}`}
+              className="shrink-0"
             >
-              Especialidades
+              {settings?.logo_light_url ? (
+                <Image
+                  src={
+                    settings.logo_light_url
+                  }
+                  alt={company}
+                  width={150}
+                  height={60}
+                  className="h-10 w-auto max-w-[170px] object-contain sm:h-12"
+                />
+              ) : (
+                <strong className="text-lg text-[var(--surface-foreground)]">
+                  {company}
+                </strong>
+              )}
             </a>
 
-            <a
-              href="#trabalhos"
-              className="transition hover:text-[var(--accent)]"
-            >
-              Trabalhos
-            </a>
+            {/* MENU DESKTOP */}
+            <nav className="hidden items-center gap-7 text-sm font-semibold text-[var(--surface-foreground)] lg:flex">
+              <a
+                href="#servicos"
+                className="transition hover:text-[var(--accent)]"
+              >
+                Especialidades
+              </a>
 
-            <a
-              href="#sobre"
-              className="transition hover:text-[var(--accent)]"
-            >
-              Sobre
-            </a>
+              <a
+                href="#trabalhos"
+                className="transition hover:text-[var(--accent)]"
+              >
+                Trabalhos
+              </a>
 
-            <a
-              href="#duvidas"
-              className="transition hover:text-[var(--accent)]"
-            >
-              Dúvidas
-            </a>
-          </nav>
+              <a
+                href="#sobre"
+                className="transition hover:text-[var(--accent)]"
+              >
+                Sobre
+              </a>
 
-          {whatsapp && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-[var(--brand-foreground)] transition hover:opacity-90 sm:px-5"
-            >
-              <FaWhatsapp className="text-lg" />
+              <a
+                href="#duvidas"
+                className="transition hover:text-[var(--accent)]"
+              >
+                Dúvidas
+              </a>
+            </nav>
 
-              <span className="hidden sm:inline">
+            {/* WHATSAPP DESKTOP */}
+            {whatsapp && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="hidden items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-[var(--brand-foreground)] transition hover:opacity-90 lg:flex"
+              >
+                <FaWhatsapp className="text-lg" />
+
                 Orçamento no WhatsApp
-              </span>
+              </a>
+            )}
 
-              <span className="sm:hidden">
-                Orçamento
-              </span>
-            </a>
-          )}
-        </div>
-      </header>
+            {/* MENU MOBILE */}
+            <MobileMenu
+              whatsappUrl={whatsappUrl}
+              hasWhatsapp={Boolean(
+                whatsapp,
+              )}
+            />
+          </div>
+        </header>
 
       {/* HERO */}
       <section
@@ -616,7 +621,7 @@ export default async function Home() {
       >
         <div className="mx-auto grid min-h-[610px] max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-[1.05fr_.95fr] lg:gap-16 lg:py-20">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">
+            <p className="max-w-full text-[10px] font-bold uppercase leading-5 tracking-[0.08em] text-[var(--accent)] sm:text-xs sm:tracking-[0.16em] lg:tracking-[0.24em]">
               {settings?.hero_eyebrow ??
                 settings?.service_area ??
                 "ATENDIMENTO PROFISSIONAL"}
@@ -643,55 +648,48 @@ export default async function Home() {
               </p>
             )}
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
               <a
                 href={whatsappUrl}
-                target={
-                  whatsapp
-                    ? "_blank"
-                    : undefined
-                }
-                rel={
-                  whatsapp
-                    ? "noreferrer"
-                    : undefined
-                }
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-6 py-3.5 font-semibold text-[var(--brand-foreground)] transition hover:-translate-y-0.5 hover:opacity-90"
+                target={whatsapp ? "_blank" : undefined}
+                rel={whatsapp ? "noreferrer" : undefined}
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand)] px-3 py-2.5 text-center text-xs font-semibold leading-4 text-[var(--brand-foreground)] transition hover:-translate-y-0.5 hover:opacity-90 sm:min-h-0 sm:gap-2 sm:px-6 sm:py-3.5 sm:text-base"
               >
                 {whatsapp && (
-                  <FaWhatsapp />
+                  <FaWhatsapp className="shrink-0 text-sm sm:text-base" />
                 )}
 
-                Solicitar orçamento grátis
+                <span>
+                  Solicitar orçamento
+                </span>
               </a>
 
               <a
                 href="#trabalhos"
-                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-3.5 font-semibold text-[var(--surface-foreground)] transition hover:-translate-y-0.5"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-center text-xs font-semibold leading-4 text-[var(--surface-foreground)] transition hover:-translate-y-0.5 sm:min-h-0 sm:px-6 sm:py-3.5 sm:text-base"
               >
-                Ver trabalhos realizados
+                Ver trabalhos
               </a>
             </div>
 
             {stats.length > 0 && (
-              <div className="mt-10 grid max-w-xl grid-cols-1 gap-5 border-t border-[var(--border)] pt-8 sm:grid-cols-3">
-                {stats.map(
-                  (stat, index) => (
-                    <div
-                      key={`${stat.value}-${index}`}
-                    >
-                      <strong className="text-2xl font-bold text-[var(--foreground)]">
-                        {stat.value}
-                      </strong>
+              <div className="mt-8 grid max-w-xl grid-cols-3 gap-x-5 gap-y-4 border-t border-[var(--border)] pt-6 sm:grid-cols-3 sm:gap-5 sm:pt-8">
+                {stats.map((stat, index) => (
+                  <div
+                    key={`${stat.value}-${index}`}
+                    className="min-w-0"
+                  >
+                    <strong className="block text-lg font-bold leading-tight text-[var(--foreground)] sm:text-2xl">
+                      {stat.value}
+                    </strong>
 
-                      {stat.label && (
-                        <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
-                          {stat.label}
-                        </p>
-                      )}
-                    </div>
-                  ),
-                )}
+                    {stat.label && (
+                      <p className="mt-1 text-[11px] leading-4 text-[var(--muted)] sm:text-xs sm:leading-5">
+                        {stat.label}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -724,24 +722,28 @@ export default async function Home() {
 
         {cities.length > 0 && (
           <div className="border-t border-[var(--border)] bg-[var(--surface)]">
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 py-5 text-sm">
-              <MapPin
-                size={18}
-                className="text-[var(--accent)]"
-              />
+            <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-5 text-sm sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="flex items-center gap-2">
+                <MapPin
+                  size={18}
+                  className="shrink-0 text-[var(--accent)]"
+                />
 
-              <span className="mr-1 font-medium text-[var(--surface-muted)]">
-                Atendemos também:
-              </span>
-
-              {cities.map((city) => (
-                <span
-                  key={city}
-                  className="rounded-full border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-[var(--foreground)] shadow-sm"
-                >
-                  {city}
+                <span className="font-medium text-[var(--surface-muted)]">
+                  Atendemos também:
                 </span>
-              ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {cities.map((city) => (
+                  <span
+                    key={city}
+                    className="rounded-full border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-[var(--foreground)] shadow-sm"
+                  >
+                    {city}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         )}
