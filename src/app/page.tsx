@@ -30,26 +30,25 @@ import { submitLead } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type ExtendedTenantSettings =
-  TenantSettings & {
-    hero_eyebrow?: string | null;
-    hero_secondary_text?: string | null;
+type ExtendedTenantSettings = TenantSettings & {
+  hero_eyebrow?: string | null;
+  hero_secondary_text?: string | null;
 
-    stat_1_value?: string | null;
-    stat_1_label?: string | null;
+  stat_1_value?: string | null;
+  stat_1_label?: string | null;
 
-    stat_2_value?: string | null;
-    stat_2_label?: string | null;
+  stat_2_value?: string | null;
+  stat_2_label?: string | null;
 
-    stat_3_value?: string | null;
-    stat_3_label?: string | null;
+  stat_3_value?: string | null;
+  stat_3_label?: string | null;
 
-    service_cities?: string | null;
+  service_cities?: string | null;
 
-    about_image_url?: string | null;
+  about_image_url?: string | null;
 
-    tiktok_url?: string | null;
-  };
+  tiktok_url?: string | null;
+};
 
 type Service = {
   id: string;
@@ -99,6 +98,83 @@ type Stat = {
   value: string;
   label: string | null | undefined;
 };
+
+function hexToRgb(hex: string) {
+  let value = hex.replace("#", "").trim();
+
+  if (value.length === 3) {
+    value = value
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) {
+    return {
+      r: 255,
+      g: 255,
+      b: 255,
+    };
+  }
+
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16),
+  };
+}
+
+function isDarkColor(hex: string) {
+  const { r, g, b } = hexToRgb(hex);
+
+  const luminance =
+    (0.299 * r +
+      0.587 * g +
+      0.114 * b) /
+    255;
+
+  return luminance < 0.55;
+}
+
+function mixHexColor(
+  base: string,
+  target: string,
+  amount: number,
+) {
+  const baseRgb = hexToRgb(base);
+  const targetRgb = hexToRgb(target);
+
+  const mix = (
+    from: number,
+    to: number,
+  ) =>
+    Math.round(
+      from + (to - from) * amount,
+    );
+
+  const r = mix(
+    baseRgb.r,
+    targetRgb.r,
+  );
+
+  const g = mix(
+    baseRgb.g,
+    targetRgb.g,
+  );
+
+  const b = mix(
+    baseRgb.b,
+    targetRgb.b,
+  );
+
+  return `#${[r, g, b]
+    .map((value) =>
+      value
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
 
 export default async function Home() {
   const headerStore =
@@ -307,6 +383,78 @@ export default async function Home() {
     settings?.secondary_color ??
     "#ffffff";
 
+  /*
+   * TEMA AUTOMÁTICO
+   */
+  const darkBackground =
+    isDarkColor(secondary);
+
+  const darkBrand =
+    isDarkColor(primary);
+
+  const backgroundAlt =
+    mixHexColor(
+      secondary,
+      darkBackground
+        ? "#ffffff"
+        : "#000000",
+      darkBackground ? 0.07 : 0.04,
+    );
+
+  const surface =
+    darkBackground
+      ? mixHexColor(
+          secondary,
+          "#ffffff",
+          0.1,
+        )
+      : "#ffffff";
+
+  const foreground =
+    darkBackground
+      ? "#f8fafc"
+      : "#0f172a";
+
+  const muted =
+    darkBackground
+      ? "#cbd5e1"
+      : "#64748b";
+
+  const border =
+    darkBackground
+      ? "rgba(255,255,255,0.14)"
+      : "#e2e8f0";
+
+  const surfaceForeground =
+    darkBackground
+      ? "#f8fafc"
+      : "#0f172a";
+
+  const surfaceMuted =
+    darkBackground
+      ? "#cbd5e1"
+      : "#64748b";
+
+  const brandForeground =
+    darkBrand
+      ? "#ffffff"
+      : "#0f172a";
+
+  const brandMuted =
+    darkBrand
+      ? "rgba(255,255,255,0.72)"
+      : "rgba(15,23,42,0.72)";
+
+  const brandBorder =
+    darkBrand
+      ? "rgba(255,255,255,0.16)"
+      : "rgba(15,23,42,0.16)";
+
+  const brandField =
+    darkBrand
+      ? "rgba(255,255,255,0.08)"
+      : "rgba(255,255,255,0.42)";
+
   const cities =
     settings?.service_cities
       ?.split(",")
@@ -348,28 +496,45 @@ export default async function Home() {
     (item): item is Stat =>
       typeof item.value ===
         "string" &&
-      item.value.trim().length >
-        0,
+      item.value.trim().length > 0,
   );
 
   const cssVariables = {
     "--brand": primary,
+    "--brand-foreground":
+      brandForeground,
+    "--brand-muted": brandMuted,
+    "--brand-border": brandBorder,
+    "--brand-field": brandField,
+
     "--accent": accent,
+
     "--background": secondary,
+    "--background-alt":
+      backgroundAlt,
+
+    "--foreground": foreground,
+    "--muted": muted,
+    "--border": border,
+
+    "--surface": surface,
+    "--surface-foreground":
+      surfaceForeground,
+    "--surface-muted":
+      surfaceMuted,
   } as CSSProperties;
 
   return (
     <main
       style={cssVariables}
-      className="min-h-screen bg-[var(--background)] text-slate-900"
+      className="min-h-screen bg-[var(--background)] text-[var(--foreground)]"
     >
-      {/* ATUALIZAÇÃO AUTOMÁTICA */}
       <SiteLiveRefresh
         tenantId={tenant.id}
       />
 
       {/* NAVBAR */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)] shadow-sm">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-5 px-6">
           <a
             href="#topo"
@@ -387,13 +552,13 @@ export default async function Home() {
                 className="h-11 w-auto object-contain sm:h-12"
               />
             ) : (
-              <strong className="text-lg text-slate-950">
+              <strong className="text-lg text-[var(--surface-foreground)]">
                 {company}
               </strong>
             )}
           </a>
 
-          <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-700 lg:flex">
+          <nav className="hidden items-center gap-7 text-sm font-semibold text-[var(--surface-foreground)] lg:flex">
             <a
               href="#servicos"
               className="transition hover:text-[var(--accent)]"
@@ -428,7 +593,7 @@ export default async function Home() {
               href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 sm:px-5"
+              className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-[var(--brand-foreground)] transition hover:opacity-90 sm:px-5"
             >
               <FaWhatsapp className="text-lg" />
 
@@ -447,7 +612,7 @@ export default async function Home() {
       {/* HERO */}
       <section
         id="topo"
-        className="hero-grid scroll-mt-20 border-b border-slate-200 bg-[var(--background)]"
+        className="hero-grid scroll-mt-20 border-b border-[var(--border)] bg-[var(--background)]"
       >
         <div className="mx-auto grid min-h-[610px] max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-[1.05fr_.95fr] lg:gap-16 lg:py-20">
           <div>
@@ -457,21 +622,21 @@ export default async function Home() {
                 "ATENDIMENTO PROFISSIONAL"}
             </p>
 
-            <h1 className="mt-5 max-w-2xl text-4xl font-bold leading-[1.08] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 max-w-2xl text-4xl font-bold leading-[1.08] tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl">
               {settings?.hero_title ??
                 `Soluções profissionais da ${company}`}
             </h1>
 
             {(settings?.hero_description ||
               settings?.slogan) && (
-              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+              <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">
                 {settings?.hero_description ??
                   settings?.slogan}
               </p>
             )}
 
             {settings?.hero_secondary_text && (
-              <p className="mt-3 max-w-xl leading-7 text-slate-500">
+              <p className="mt-3 max-w-xl leading-7 text-[var(--muted)]">
                 {
                   settings.hero_secondary_text
                 }
@@ -491,7 +656,7 @@ export default async function Home() {
                     ? "noreferrer"
                     : undefined
                 }
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-6 py-3.5 font-semibold text-white transition hover:-translate-y-0.5 hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-6 py-3.5 font-semibold text-[var(--brand-foreground)] transition hover:-translate-y-0.5 hover:opacity-90"
               >
                 {whatsapp && (
                   <FaWhatsapp />
@@ -502,25 +667,25 @@ export default async function Home() {
 
               <a
                 href="#trabalhos"
-                className="rounded-xl border border-slate-300 bg-white px-6 py-3.5 font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
+                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-3.5 font-semibold text-[var(--surface-foreground)] transition hover:-translate-y-0.5"
               >
                 Ver trabalhos realizados
               </a>
             </div>
 
             {stats.length > 0 && (
-              <div className="mt-10 grid max-w-xl grid-cols-1 gap-5 border-t border-slate-200 pt-8 sm:grid-cols-3">
+              <div className="mt-10 grid max-w-xl grid-cols-1 gap-5 border-t border-[var(--border)] pt-8 sm:grid-cols-3">
                 {stats.map(
                   (stat, index) => (
                     <div
                       key={`${stat.value}-${index}`}
                     >
-                      <strong className="text-2xl font-bold text-slate-950">
+                      <strong className="text-2xl font-bold text-[var(--foreground)]">
                         {stat.value}
                       </strong>
 
                       {stat.label && (
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
                           {stat.label}
                         </p>
                       )}
@@ -545,35 +710,34 @@ export default async function Home() {
                   height={675}
                   priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="aspect-[4/3] w-full rounded-2xl border border-slate-200 object-cover shadow-xl shadow-slate-900/10"
+                  className="aspect-[4/3] w-full rounded-2xl border border-[var(--border)] object-cover shadow-xl shadow-black/10"
                 />
               </>
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-8 text-center text-sm text-slate-400">
+              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-8 text-center text-sm text-[var(--surface-muted)]">
                 Adicione uma imagem do
-                Hero no painel
-                administrativo.
+                Hero no painel administrativo.
               </div>
             )}
           </div>
         </div>
 
         {cities.length > 0 && (
-          <div className="border-t border-slate-200 bg-white/70">
+          <div className="border-t border-[var(--border)] bg-[var(--surface)]">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 py-5 text-sm">
               <MapPin
                 size={18}
                 className="text-[var(--accent)]"
               />
 
-              <span className="mr-1 font-medium text-slate-600">
+              <span className="mr-1 font-medium text-[var(--surface-muted)]">
                 Atendemos também:
               </span>
 
               {cities.map((city) => (
                 <span
                   key={city}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 shadow-sm"
+                  className="rounded-full border border-[var(--border)] bg-[var(--background)] px-4 py-2 text-[var(--foreground)] shadow-sm"
                 >
                   {city}
                 </span>
@@ -587,7 +751,7 @@ export default async function Home() {
       {services.length > 0 && (
         <section
           id="servicos"
-          className="scroll-mt-20 bg-[color-mix(in_srgb,var(--background)_92%,#000_8%)] py-20 sm:py-24"
+          className="scroll-mt-20 bg-[var(--background-alt)] py-20 sm:py-24"
         >
           <div className="mx-auto max-w-6xl px-6">
             <SectionHeading
@@ -601,21 +765,21 @@ export default async function Home() {
                 (service) => (
                   <article
                     key={service.id}
-                    className="group rounded-2xl border border-slate-200 bg-white p-7 transition duration-200 hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-lg hover:shadow-slate-900/5"
+                    className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 transition duration-200 hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-lg hover:shadow-black/10"
                   >
                     {service.icon && (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 transition group-hover:bg-[var(--accent)]/10">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--background)] transition">
                         <ServiceIcon
                           name={
                             service.icon
                           }
-                          className="h-7 w-7 text-slate-700 transition group-hover:text-[var(--accent)]"
+                          className="h-7 w-7 text-[var(--accent)]"
                         />
                       </div>
                     )}
 
                     <h3
-                      className={`text-lg font-semibold text-slate-950 ${
+                      className={`text-lg font-semibold text-[var(--surface-foreground)] ${
                         service.icon
                           ? "mt-6"
                           : ""
@@ -625,7 +789,7 @@ export default async function Home() {
                     </h3>
 
                     {service.short_description && (
-                      <p className="mt-3 leading-7 text-slate-600">
+                      <p className="mt-3 leading-7 text-[var(--surface-muted)]">
                         {
                           service.short_description
                         }
@@ -653,7 +817,7 @@ export default async function Home() {
                 description="Confira alguns trabalhos realizados e veja de perto os detalhes de cada projeto."
               />
 
-              <span className="shrink-0 text-sm text-slate-400">
+              <span className="shrink-0 text-sm text-[var(--muted)]">
                 {gallery.length}{" "}
                 {gallery.length === 1
                   ? "trabalho"
@@ -671,9 +835,8 @@ export default async function Home() {
       )}
 
       {/* ANTES E DEPOIS */}
-      {beforeAfter.length >
-        0 && (
-        <section className="bg-[color-mix(in_srgb,var(--background)_92%,#000_8%)] py-20 sm:py-24">
+      {beforeAfter.length > 0 && (
+        <section className="bg-[var(--background-alt)] py-20 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <SectionHeading
               eyebrow="TRANSFORMAÇÃO"
@@ -736,7 +899,7 @@ export default async function Home() {
                   width={600}
                   height={750}
                   sizes="(max-width: 768px) 100vw, 40vw"
-                  className="aspect-[4/5] w-full rounded-2xl object-cover shadow-lg shadow-slate-900/10"
+                  className="aspect-[4/5] w-full rounded-2xl object-cover shadow-lg shadow-black/10"
                 />
               </div>
             )}
@@ -746,13 +909,13 @@ export default async function Home() {
                 QUEM FAZ
               </p>
 
-              <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
                 {settings?.about_title ??
                   company}
               </h2>
 
               {settings?.about_content && (
-                <p className="mt-6 whitespace-pre-line text-lg leading-8 text-slate-600">
+                <p className="mt-6 whitespace-pre-line text-lg leading-8 text-[var(--muted)]">
                   {
                     settings.about_content
                   }
@@ -764,7 +927,7 @@ export default async function Home() {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 font-semibold text-white transition hover:opacity-90"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 font-semibold text-[var(--brand-foreground)] transition hover:opacity-90"
                 >
                   <FaWhatsapp />
 
@@ -778,7 +941,7 @@ export default async function Home() {
 
       {/* AVALIAÇÕES */}
       {reviews.length > 0 && (
-        <section className="bg-[color-mix(in_srgb,var(--background)_92%,#000_8%)] py-20 sm:py-24">
+        <section className="bg-[var(--background-alt)] py-20 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <SectionHeading
               eyebrow="CLIENTES"
@@ -804,7 +967,7 @@ export default async function Home() {
                       key={
                         review.id
                       }
-                      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm"
                     >
                       <div className="flex gap-1 text-amber-500">
                         {Array.from({
@@ -828,23 +991,19 @@ export default async function Home() {
                         )}
                       </div>
 
-                      <p className="mt-5 leading-7 text-slate-600">
-                        “
-                        {
-                          review.comment
-                        }
-                        ”
+                      <p className="mt-5 leading-7 text-[var(--surface-muted)]">
+                        “{review.comment}”
                       </p>
 
-                      <div className="mt-6 border-t border-slate-100 pt-4">
-                        <strong className="block text-slate-950">
+                      <div className="mt-6 border-t border-[var(--border)] pt-4">
+                        <strong className="block text-[var(--surface-foreground)]">
                           {
                             review.customer_name
                           }
                         </strong>
 
                         {review.city && (
-                          <span className="mt-1 block text-sm text-slate-400">
+                          <span className="mt-1 block text-sm text-[var(--surface-muted)]">
                             {
                               review.city
                             }
@@ -873,7 +1032,9 @@ export default async function Home() {
             />
 
             <div className="mt-10">
-              <FaqAccordion items={faq} />
+              <FaqAccordion
+                items={faq}
+              />
             </div>
           </div>
         </section>
@@ -883,44 +1044,38 @@ export default async function Home() {
       {form && whatsapp && (
         <section
           id="orcamento"
-          className="scroll-mt-20 bg-[var(--brand)] py-20 text-white sm:py-24"
+          className="scroll-mt-20 border-y border-[var(--border)] bg-[var(--background-alt)] py-20 sm:py-24"
         >
           <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
-                SOLICITE SEU
-                ORÇAMENTO
+                SOLICITE SEU ORÇAMENTO
               </p>
 
-              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
                 {form.title}
               </h2>
 
               {form.description && (
-                <p className="mt-5 max-w-lg leading-7 text-white/70">
-                  {
-                    form.description
-                  }
+                <p className="mt-5 max-w-lg leading-7 text-[var(--muted)]">
+                  {form.description}
                 </p>
               )}
 
-              <div className="mt-8 flex items-start gap-3 text-sm text-white/70">
+              <div className="mt-8 flex items-start gap-3 text-sm text-[var(--muted)]">
                 <FaWhatsapp className="mt-1 shrink-0 text-lg text-[var(--accent)]" />
 
                 <p>
-                  Depois de preencher
-                  o formulário, você
-                  continuará o
-                  atendimento
-                  diretamente pelo
-                  WhatsApp.
+                  Depois de preencher o formulário,
+                  você continuará o atendimento
+                  diretamente pelo WhatsApp.
                 </p>
               </div>
             </div>
 
             <form
               action={submitLead}
-              className="grid gap-4 rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 sm:p-6"
+              className="grid gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-lg shadow-black/5 sm:p-6"
             >
               <input
                 type="hidden"
@@ -937,9 +1092,7 @@ export default async function Home() {
               <input
                 type="hidden"
                 name="intro"
-                value={
-                  form.whatsapp_intro_message
-                }
+                value={form.whatsapp_intro_message}
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -981,33 +1134,21 @@ export default async function Home() {
                 <select
                   name="service_id"
                   defaultValue=""
-                  className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white outline-none transition focus:border-[var(--accent)]"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
                 >
-                  <option
-                    value=""
-                    className="text-slate-900"
-                  >
+                  <option value="">
                     {form.service_placeholder ||
                       "Selecione o serviço"}
                   </option>
 
-                  {services.map(
-                    (service) => (
-                      <option
-                        key={
-                          service.id
-                        }
-                        value={
-                          service.id
-                        }
-                        className="text-slate-900"
-                      >
-                        {
-                          service.name
-                        }
-                      </option>
-                    ),
-                  )}
+                  {services.map((service) => (
+                    <option
+                      key={service.id}
+                      value={service.id}
+                    >
+                      {service.name}
+                    </option>
+                  ))}
                 </select>
               </FormField>
 
@@ -1019,13 +1160,13 @@ export default async function Home() {
                     form.message_placeholder ||
                     "Conte um pouco sobre o que você precisa"
                   }
-                  className="w-full resize-y rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white outline-none transition placeholder:text-white/40 focus:border-[var(--accent)]"
+                  className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)]"
                 />
               </FormField>
 
               <button
                 type="submit"
-                className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-[var(--brand)] transition hover:-translate-y-0.5 hover:opacity-90"
+                className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-6 py-3.5 font-semibold text-[var(--brand-foreground)] transition hover:-translate-y-0.5 hover:opacity-90"
               >
                 <FaWhatsapp />
 
@@ -1038,8 +1179,8 @@ export default async function Home() {
       )}
 
       {/* FOOTER */}
-      <footer className="border-t border-slate-200 bg-[var(--background)]">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 py-8 text-center text-sm text-slate-500 sm:flex-row sm:text-left">
+      <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 py-8 text-center text-sm text-[var(--surface-muted)] sm:flex-row sm:text-left">
           <div className="flex flex-col items-center gap-2 sm:items-start">
             {settings?.logo_light_url ? (
               <Image
@@ -1052,14 +1193,14 @@ export default async function Home() {
                 className="h-9 w-auto object-contain"
               />
             ) : (
-              <strong className="text-slate-800">
+              <strong className="text-[var(--surface-foreground)]">
                 {company}
               </strong>
             )}
 
             {(settings?.city ||
               settings?.state) && (
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[var(--surface-muted)]">
                 {[
                   settings?.city,
                   settings?.state,
@@ -1131,12 +1272,12 @@ function SectionHeading({
         {eyebrow}
       </p>
 
-      <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+      <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
         {title}
       </h2>
 
       {description && (
-        <p className="mt-4 max-w-2xl leading-7 text-slate-500">
+        <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">
           {description}
         </p>
       )}
@@ -1153,7 +1294,7 @@ function FormField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-white/80">
+      <span className="mb-2 block text-sm font-medium text-[var(--surface-foreground)]">
         {label}
       </span>
 
@@ -1169,7 +1310,7 @@ function Input(
     <input
       {...props}
       required
-      className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white outline-none transition placeholder:text-white/40 focus:border-[var(--accent)]"
+      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)]"
     />
   );
 }
@@ -1190,7 +1331,7 @@ function Social({
       rel="noreferrer"
       aria-label={label}
       title={label}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] text-[var(--surface-foreground)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:text-[var(--accent)]"
     >
       {children}
     </a>

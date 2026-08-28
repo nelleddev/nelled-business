@@ -25,7 +25,7 @@ export function FaqAccordion({
   }
 
   return (
-    <div className="divide-y divide-slate-200 border-y border-slate-200">
+    <div className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
       {items.map((item) => {
         const isOpen =
           openId === item.id;
@@ -41,16 +41,17 @@ export function FaqAccordion({
                 toggle(item.id)
               }
               aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-6 text-left font-semibold text-slate-900"
+              aria-controls={`faq-answer-${item.id}`}
+              className="flex w-full items-center justify-between gap-6 text-left font-semibold text-[var(--foreground)] transition hover:text-[var(--accent)]"
             >
               <span>
                 {item.question}
               </span>
 
               <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl font-normal transition-transform duration-200 ${
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-xl font-normal text-[var(--surface-foreground)] transition-all duration-200 ${
                   isOpen
-                    ? "rotate-45"
+                    ? "rotate-45 border-[var(--accent)] text-[var(--accent)]"
                     : ""
                 }`}
               >
@@ -59,6 +60,7 @@ export function FaqAccordion({
             </button>
 
             <div
+              id={`faq-answer-${item.id}`}
               className={`grid transition-all duration-300 ease-in-out ${
                 isOpen
                   ? "grid-rows-[1fr] opacity-100"
@@ -66,7 +68,7 @@ export function FaqAccordion({
               }`}
             >
               <div className="overflow-hidden">
-                <p className="max-w-3xl pr-10 pt-4 leading-7 text-slate-600">
+                <p className="max-w-3xl pr-10 pt-4 leading-7 text-[var(--muted)]">
                   {item.answer}
                 </p>
               </div>

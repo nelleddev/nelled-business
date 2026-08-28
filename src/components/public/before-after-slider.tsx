@@ -21,7 +21,7 @@ export function BeforeAfterSlider({
 
   return (
     <article className="group">
-      <div className="relative aspect-[4/3] select-none overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
+      <div className="relative aspect-[4/3] select-none overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
         {/* DEPOIS */}
         <Image
           src={afterUrl}
@@ -57,11 +57,11 @@ export function BeforeAfterSlider({
           />
         </div>
 
-        {/* SOMBREAMENTO LEVE */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
+        {/* SOMBREAMENTO */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
 
         {/* LABEL ANTES */}
-        <span className="pointer-events-none absolute bottom-4 left-4 z-20 rounded-full bg-black/65 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white backdrop-blur">
+        <span className="pointer-events-none absolute bottom-4 left-4 z-20 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur">
           Antes
         </span>
 
@@ -77,8 +77,8 @@ export function BeforeAfterSlider({
             left: `${position}%`,
           }}
         >
-          {/* BOTÃO CENTRAL */}
-          <div className="absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[var(--brand)] text-white shadow-lg">
+          {/* CONTROLE CENTRAL */}
+          <div className="absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[var(--brand)] text-[var(--brand-foreground)] shadow-lg">
             <span className="flex items-center gap-[2px] text-lg font-bold">
               ‹
               <span className="text-xs">
@@ -112,13 +112,13 @@ export function BeforeAfterSlider({
       {(title || description) && (
         <div className="mt-4">
           {title && (
-            <h3 className="text-lg font-semibold text-slate-950">
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">
               {title}
             </h3>
           )}
 
           {description && (
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--muted)]">
               {description}
             </p>
           )}
