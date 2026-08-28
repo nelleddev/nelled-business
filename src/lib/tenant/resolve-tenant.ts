@@ -7,104 +7,231 @@ import type {
   TenantSettings,
 } from "@/types/tenant";
 
-function normalizeHostname(hostname: string) {
+function normalizeHostname(
+  hostname: string,
+) {
   return hostname
     .toLowerCase()
     .trim()
     .replace(/^https?:\/\//, "")
     .replace(/:\d+$/, "")
-    .replace(/^www\./, "");
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
+}
+
+function shouldUseDefaultTenant(
+  hostname: string,
+) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.endsWith(".vercel.app")
+  );
+}
+
+/**
+ * Resolve o tenant padrão utilizado em:
+ * - localhost
+ * - 127.0.0.1
+ * - domínios *.vercel.app
+ */
+async function resolveDefaultTenant(
+  hostname: string,
+): Promise<ResolvedTenant | null> {
+  const defaultSlug =
+    process.env.DEFAULT_TENANT_SLUG;
+
+  if (!defaultSlug) {
+    console.error(
+      "[resolveTenant] DEFAULT_TENANT_SLUG não configurado.",
+    );
+
+    return null;
+  }
+
+  const supabase =
+    createAdminSupabaseClient();
+
+  const {
+    data: tenant,
+    error: tenantError,
+  } = await supabase
+    .from("tenants")
+    .select("*")
+    .eq("slug", defaultSlug)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (tenantError) {
+    console.error(
+      "[resolveTenant] Erro ao buscar tenant padrão:",
+      tenantError.message,
+    );
+
+    return null;
+  }
+
+  if (!tenant) {
+    console.error(
+      `[resolveTenant] Tenant padrão "${defaultSlug}" não encontrado.`,
+    );
+
+    return null;
+  }
+
+  const {
+    data: settings,
+    error: settingsError,
+  } = await supabase
+    .from("tenant_settings")
+    .select("*")
+    .eq("tenant_id", tenant.id)
+    .maybeSingle();
+
+  if (settingsError) {
+    console.error(
+      "[resolveTenant] Erro ao buscar configurações do tenant padrão:",
+      settingsError.message,
+    );
+  }
+
+  return {
+    tenant: tenant as Tenant,
+
+    settings:
+      (settings as TenantSettings | null) ??
+      null,
+
+    domain: hostname,
+
+    isCustomDomain: false,
+  };
 }
 
 export async function resolveTenant(
   hostname: string,
 ): Promise<ResolvedTenant | null> {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname =
+    normalizeHostname(hostname);
 
-  const supabase = createAdminSupabaseClient();
+  if (!normalizedHostname) {
+    return null;
+  }
 
-  // Desenvolvimento local
+  /*
+   * Localhost e URLs da Vercel utilizam
+   * temporariamente o tenant definido por
+   * DEFAULT_TENANT_SLUG.
+   */
   if (
-    normalizedHostname === "localhost" ||
-    normalizedHostname === "127.0.0.1"
+    shouldUseDefaultTenant(
+      normalizedHostname,
+    )
   ) {
-    const defaultTenantSlug =
-      process.env.DEFAULT_TENANT_SLUG;
-
-    if (!defaultTenantSlug) {
-      return null;
-    }
-
-    const { data: tenant, error: tenantError } =
-      await supabase
-        .from("tenants")
-        .select("*")
-        .eq("slug", defaultTenantSlug)
-        .eq("status", "active")
-        .maybeSingle();
-
-    if (tenantError || !tenant) {
-      return null;
-    }
-
-    const { data: settings } = await supabase
-      .from("tenant_settings")
-      .select("*")
-      .eq("tenant_id", tenant.id)
-      .maybeSingle();
-
-    return {
-      tenant: tenant as Tenant,
-      settings: settings as TenantSettings | null,
-      domain: normalizedHostname,
-      isCustomDomain: false,
-    };
+    return resolveDefaultTenant(
+      normalizedHostname,
+    );
   }
 
-  const { data: domainRecord, error: domainError } =
-    await supabase
-      .from("tenant_domains")
-      .select(
-        `
-          domain,
-          type,
-          tenant_id,
-          tenants!inner (
-            id,
-            name,
-            slug,
-            status,
-            created_at,
-            updated_at
-          )
-        `,
-      )
-      .eq("domain", normalizedHostname)
-      .maybeSingle();
+  const supabase =
+    createAdminSupabaseClient();
 
-  if (domainError || !domainRecord) {
-    return null;
-  }
-
-  const tenant = Array.isArray(domainRecord.tenants)
-    ? domainRecord.tenants[0]
-    : domainRecord.tenants;
-
-  if (!tenant || tenant.status !== "active") {
-    return null;
-  }
-
-  const { data: settings } = await supabase
-    .from("tenant_settings")
-    .select("*")
-    .eq("tenant_id", domainRecord.tenant_id)
+  /*
+   * Domínios cadastrados:
+   *
+   * gilvanforros.nelled.app
+   * empresa.com.br
+   */
+  const {
+    data: domain,
+    error: domainError,
+  } = await supabase
+    .from("tenant_domains")
+    .select(
+      `
+        *,
+        tenants!inner (
+          *
+        )
+      `,
+    )
+    .eq("domain", normalizedHostname)
     .maybeSingle();
 
+  if (domainError) {
+    console.error(
+      "[resolveTenant] Erro ao resolver domínio:",
+      domainError.message,
+    );
+
+    return null;
+  }
+
+  if (!domain) {
+    console.warn(
+      `[resolveTenant] Domínio não cadastrado: ${normalizedHostname}`,
+    );
+
+    return null;
+  }
+
+  /*
+   * A relação do Supabase pode chegar
+   * como objeto ou array.
+   */
+  const joinedTenant =
+    Array.isArray(domain.tenants)
+      ? domain.tenants[0]
+      : domain.tenants;
+
+  if (!joinedTenant) {
+    console.warn(
+      `[resolveTenant] Tenant não encontrado para o domínio: ${normalizedHostname}`,
+    );
+
+    return null;
+  }
+
+  if (
+    joinedTenant.status !== "active"
+  ) {
+    console.warn(
+      `[resolveTenant] Tenant inativo para o domínio: ${normalizedHostname}`,
+    );
+
+    return null;
+  }
+
+  const {
+    data: settings,
+    error: settingsError,
+  } = await supabase
+    .from("tenant_settings")
+    .select("*")
+    .eq(
+      "tenant_id",
+      joinedTenant.id,
+    )
+    .maybeSingle();
+
+  if (settingsError) {
+    console.error(
+      "[resolveTenant] Erro ao buscar configurações do tenant:",
+      settingsError.message,
+    );
+  }
+
   return {
-    tenant: tenant as Tenant,
-    settings: settings as TenantSettings | null,
+    tenant:
+      joinedTenant as Tenant,
+
+    settings:
+      (settings as TenantSettings | null) ??
+      null,
+
     domain: normalizedHostname,
+
     isCustomDomain:
-      domainRecord.type === "custom",
+      domain.type === "custom",
   };
 }

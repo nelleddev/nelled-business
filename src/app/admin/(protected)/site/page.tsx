@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { ColorField } from "@/components/admin/color-field";
 import { FormMessage } from "@/components/admin/form-message";
+import { SiteUpdateBroadcaster } from "@/components/admin/site-update-broadcaster";
 import { getCurrentTenant } from "@/lib/auth/get-current-tenant";
 import type { TenantSettings } from "@/types/tenant";
 
@@ -19,9 +21,7 @@ type ExtendedTenantSettings =
     service_cities?: string | null;
 
     hero_eyebrow?: string | null;
-    hero_secondary_text?:
-      | string
-      | null;
+    hero_secondary_text?: string | null;
 
     stat_1_value?: string | null;
     stat_1_label?: string | null;
@@ -32,21 +32,11 @@ type ExtendedTenantSettings =
     stat_3_value?: string | null;
     stat_3_label?: string | null;
 
-    about_image_url?:
-      | string
-      | null;
+    about_image_url?: string | null;
 
-    instagram_username?:
-      | string
-      | null;
-
-    facebook_username?:
-      | string
-      | null;
-
-    tiktok_username?:
-      | string
-      | null;
+    instagram_username?: string | null;
+    facebook_username?: string | null;
+    tiktok_username?: string | null;
 
     tiktok_url?: string | null;
   };
@@ -69,16 +59,8 @@ type FieldProps = {
 
 type CardProps = {
   title: string;
+  description?: string;
   children: ReactNode;
-};
-
-type ColorField = {
-  name:
-    | "primary_color"
-    | "secondary_color"
-    | "accent_color";
-  title: string;
-  value: string;
 };
 
 type StatField = {
@@ -86,23 +68,19 @@ type StatField = {
     | "stat_1_value"
     | "stat_2_value"
     | "stat_3_value";
+
   labelName:
     | "stat_1_label"
     | "stat_2_label"
     | "stat_3_label";
+
   value: string | null;
   label: string | null;
 };
 
 function getSocialUsername(
-  username:
-    | string
-    | null
-    | undefined,
-  url:
-    | string
-    | null
-    | undefined,
+  username: string | null | undefined,
+  url: string | null | undefined,
 ): string {
   if (username) {
     return username;
@@ -113,10 +91,7 @@ function getSocialUsername(
   }
 
   return url
-    .replace(
-      /^https?:\/\/(www\.)?[^/]+\/?/i,
-      "",
-    )
+    .replace(/^https?:\/\/(www\.)?[^/]+\/?/i, "")
     .replace(/^@/, "")
     .replace(/^\//, "")
     .replace(/\/$/, "");
@@ -136,39 +111,21 @@ export default async function SitePage({
     (currentTenant.settings ??
       {}) as Partial<ExtendedTenantSettings>;
 
-  const params =
-    await searchParams;
+  const params = await searchParams;
 
-  const colors: ColorField[] = [
-    {
-      name: "primary_color",
-      title: "Principal",
-      value:
-        settings.primary_color ??
-        "#0b3b6f",
-    },
-    {
-      name: "secondary_color",
-      title: "Fundo",
-      value:
-        settings.secondary_color ??
-        "#ffffff",
-    },
-    {
-      name: "accent_color",
-      title: "Destaque",
-      value:
-        settings.accent_color ??
-        "#f59e42",
-    },
-  ];
+  /*
+   * Quando a Server Action salva e redireciona
+   * para ?success=..., o componente client envia
+   * um evento para as outras abas abertas.
+   */
+  const siteWasUpdated =
+    params.success ===
+    "Site atualizado com sucesso";
 
   const stats: StatField[] = [
     {
-      valueName:
-        "stat_1_value",
-      labelName:
-        "stat_1_label",
+      valueName: "stat_1_value",
+      labelName: "stat_1_label",
       value:
         settings.stat_1_value ??
         null,
@@ -177,10 +134,8 @@ export default async function SitePage({
         null,
     },
     {
-      valueName:
-        "stat_2_value",
-      labelName:
-        "stat_2_label",
+      valueName: "stat_2_value",
+      labelName: "stat_2_label",
       value:
         settings.stat_2_value ??
         null,
@@ -189,10 +144,8 @@ export default async function SitePage({
         null,
     },
     {
-      valueName:
-        "stat_3_value",
-      labelName:
-        "stat_3_label",
+      valueName: "stat_3_value",
+      labelName: "stat_3_label",
       value:
         settings.stat_3_value ??
         null,
@@ -224,7 +177,7 @@ export default async function SitePage({
     <>
       <AdminPageHeader
         title="Site"
-        description="Edite toda a identidade e o conteúdo principal da landing page."
+        description="Edite a identidade visual e o conteúdo principal da landing page."
       />
 
       <FormMessage
@@ -232,20 +185,31 @@ export default async function SitePage({
         error={params.error}
       />
 
+      <SiteUpdateBroadcaster
+        tenantId={
+          currentTenant.tenant.id
+        }
+        shouldBroadcast={
+          siteWasUpdated
+        }
+      />
+
       <form
         action={updateSiteSettings}
         className="space-y-6"
       >
         {/* EMPRESA */}
-        <Card title="Empresa e identidade">
+        <Card
+          title="Empresa e identidade"
+          description="Informações básicas utilizadas em toda a landing page."
+        >
           <div className="grid gap-5 md:grid-cols-2">
             <Field
               name="company_name"
               title="Nome da empresa"
               value={
                 settings.company_name ??
-                currentTenant.tenant
-                  .name
+                currentTenant.tenant.name
               }
             />
 
@@ -304,42 +268,78 @@ export default async function SitePage({
         </Card>
 
         {/* CORES */}
-        <Card title="Cores">
-          <div className="grid gap-5 sm:grid-cols-3">
-            {colors.map(
-              (color) => (
-                <label
-                  key={color.name}
-                  className={label}
-                >
-                  {color.title}
+        <Card
+          title="Identidade visual"
+          description="Escolha as três cores principais do site. Cada uma possui uma função específica."
+        >
+          <div className="grid gap-5 lg:grid-cols-3">
+            <ColorField
+              name="primary_color"
+              title="Cor principal"
+              description="Usada nos botões principais, CTAs e na área de orçamento."
+              defaultValue={
+                settings.primary_color ??
+                "#0b3b6f"
+              }
+            />
 
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="color"
-                      name={color.name}
-                      defaultValue={
-                        color.value
-                      }
-                      className="h-12 w-16 cursor-pointer rounded-lg border border-slate-200 bg-white p-1"
-                    />
+            <ColorField
+              name="secondary_color"
+              title="Cor de fundo do site"
+              description="Define a cor base da landing page e das principais seções."
+              defaultValue={
+                settings.secondary_color ??
+                "#ffffff"
+              }
+            />
 
-                    <input
-                      value={
-                        color.value
-                      }
-                      readOnly
-                      className={`${input} mt-0`}
-                    />
-                  </div>
-                </label>
-              ),
-            )}
+            <ColorField
+              name="accent_color"
+              title="Cor de destaque"
+              description="Usada em ícones, pequenos títulos, detalhes e efeitos de interação."
+              defaultValue={
+                settings.accent_color ??
+                "#f59e42"
+              }
+            />
+          </div>
+
+          <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+            <p className="text-sm font-medium text-blue-900">
+              Como as cores são usadas
+            </p>
+
+            <div className="mt-3 grid gap-2 text-sm text-blue-800 sm:grid-cols-3">
+              <p>
+                <strong>
+                  Principal:
+                </strong>{" "}
+                botões e área de orçamento.
+              </p>
+
+              <p>
+                <strong>
+                  Fundo:
+                </strong>{" "}
+                fundo geral e seções.
+              </p>
+
+              <p>
+                <strong>
+                  Destaque:
+                </strong>{" "}
+                ícones, títulos menores e
+                detalhes.
+              </p>
+            </div>
           </div>
         </Card>
 
         {/* HERO */}
-        <Card title="Hero">
+        <Card
+          title="Hero"
+          description="Primeira área que o visitante vê ao acessar o site."
+        >
           <div className="grid gap-5 md:grid-cols-2">
             <Field
               name="hero_eyebrow"
@@ -429,10 +429,13 @@ export default async function SitePage({
         </Card>
 
         {/* INDICADORES */}
-        <Card title="Indicadores">
+        <Card
+          title="Indicadores"
+          description="Números de destaque exibidos no Hero."
+        >
           <p className="mb-5 text-sm text-slate-500">
             Exemplos: +10 anos de
-            experiência, +500 projetos,
+            experiência, +500 projetos ou
             atendimento em toda a região.
           </p>
 
@@ -440,14 +443,11 @@ export default async function SitePage({
             {stats.map(
               (stat, index) => (
                 <div
-                  key={
-                    stat.valueName
-                  }
+                  key={stat.valueName}
                   className="space-y-3 rounded-xl bg-slate-50 p-4"
                 >
                   <p className="text-sm font-semibold text-slate-700">
-                    Indicador{" "}
-                    {index + 1}
+                    Indicador {index + 1}
                   </p>
 
                   <Field
@@ -474,7 +474,10 @@ export default async function SitePage({
         </Card>
 
         {/* LOCALIZAÇÃO */}
-        <Card title="Localização">
+        <Card
+          title="Localização"
+          description="Configure a cidade principal e as demais regiões atendidas."
+        >
           <div className="grid gap-5 md:grid-cols-2">
             <Field
               name="city"
@@ -507,7 +510,10 @@ export default async function SitePage({
         </Card>
 
         {/* SOBRE */}
-        <Card title="Sobre">
+        <Card
+          title="Sobre"
+          description="Apresente a empresa ou profissional ao visitante."
+        >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-5">
               <Field
@@ -559,13 +565,10 @@ export default async function SitePage({
         </Card>
 
         {/* REDES SOCIAIS */}
-        <Card title="Contato e redes sociais">
-          <p className="mb-5 text-sm text-slate-500">
-            Digite somente o usuário da
-            rede social. Não precisa
-            informar a URL completa.
-          </p>
-
+        <Card
+          title="Contato e redes sociais"
+          description="Digite somente o usuário. O endereço completo é gerado automaticamente."
+        >
           <div className="grid gap-5 md:grid-cols-2">
             <SocialField
               name="instagram_username"
@@ -600,7 +603,10 @@ export default async function SitePage({
         </Card>
 
         {/* SEO */}
-        <Card title="SEO">
+        <Card
+          title="SEO"
+          description="Informações utilizadas por buscadores e compartilhamentos."
+        >
           <div className="grid gap-5 md:grid-cols-2">
             <Field
               name="seo_title"
@@ -688,13 +694,22 @@ function SocialField({
 
 function Card({
   title,
+  description,
   children,
 }: CardProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 className="mb-6 text-lg font-semibold text-slate-950">
-        {title}
-      </h2>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-slate-950">
+          {title}
+        </h2>
+
+        {description && (
+          <p className="mt-1 text-sm text-slate-500">
+            {description}
+          </p>
+        )}
+      </div>
 
       {children}
     </section>
