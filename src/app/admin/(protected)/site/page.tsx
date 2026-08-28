@@ -6,9 +6,13 @@ import { ColorField } from "@/components/admin/color-field";
 import { FormMessage } from "@/components/admin/form-message";
 import { SiteUpdateBroadcaster } from "@/components/admin/site-update-broadcaster";
 import { getCurrentTenant } from "@/lib/auth/get-current-tenant";
+import { DEFAULT_SITE_THEME } from "@/lib/theme/default-site-theme";
 import type { TenantSettings } from "@/types/tenant";
 
-import { updateSiteSettings } from "./actions";
+import {
+  resetSiteTheme,
+  updateSiteSettings,
+} from "./actions";
 
 const input =
   "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10";
@@ -91,7 +95,10 @@ function getSocialUsername(
   }
 
   return url
-    .replace(/^https?:\/\/(www\.)?[^/]+\/?/i, "")
+    .replace(
+      /^https?:\/\/(www\.)?[^/]+\/?/i,
+      "",
+    )
     .replace(/^@/, "")
     .replace(/^\//, "")
     .replace(/\/$/, "");
@@ -113,14 +120,11 @@ export default async function SitePage({
 
   const params = await searchParams;
 
-  /*
-   * Quando a Server Action salva e redireciona
-   * para ?success=..., o componente client envia
-   * um evento para as outras abas abertas.
-   */
   const siteWasUpdated =
     params.success ===
-    "Site atualizado com sucesso";
+      "Site atualizado com sucesso" ||
+    params.success ===
+      "Tema padrão restaurado";
 
   const stats: StatField[] = [
     {
@@ -276,30 +280,30 @@ export default async function SitePage({
             <ColorField
               name="primary_color"
               title="Cor principal"
-              description="Usada nos botões principais, CTAs e na área de orçamento."
+              description="Usada nos CTAs e na área de orçamento."
               defaultValue={
                 settings.primary_color ??
-                "#0b3b6f"
+                DEFAULT_SITE_THEME.primary
               }
             />
 
             <ColorField
               name="secondary_color"
               title="Cor de fundo do site"
-              description="Define a cor base da landing page e das principais seções."
+              description="Define a cor base da landing page, navbar e das principais seções."
               defaultValue={
                 settings.secondary_color ??
-                "#ffffff"
+                DEFAULT_SITE_THEME.background
               }
             />
 
             <ColorField
               name="accent_color"
               title="Cor de destaque"
-              description="Usada em ícones, pequenos títulos, detalhes e efeitos de interação."
+              description="Usada em botões principais, ícones, pequenos títulos, detalhes e efeitos de interação."
               defaultValue={
                 settings.accent_color ??
-                "#f59e42"
+                DEFAULT_SITE_THEME.accent
               }
             />
           </div>
@@ -314,24 +318,49 @@ export default async function SitePage({
                 <strong>
                   Principal:
                 </strong>{" "}
-                botões e área de orçamento.
+                CTAs e área de orçamento.
               </p>
 
               <p>
                 <strong>
                   Fundo:
                 </strong>{" "}
-                fundo geral e seções.
+                landing page, navbar e
+                principais seções.
               </p>
 
               <p>
                 <strong>
                   Destaque:
                 </strong>{" "}
-                ícones, títulos menores e
-                detalhes.
+                botões principais, ícones,
+                títulos menores e detalhes.
               </p>
             </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">
+                Tema padrão
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Restaura somente as três
+                cores. Textos, imagens,
+                serviços e demais
+                configurações não são
+                alterados.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              formAction={resetSiteTheme}
+              className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            >
+              Restaurar tema padrão
+            </button>
           </div>
         </Card>
 

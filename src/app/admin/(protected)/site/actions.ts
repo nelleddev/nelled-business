@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getCurrentTenant } from "@/lib/auth/get-current-tenant";
 import { uploadImage } from "@/lib/cloudinary/upload";
 import { createClient } from "@/lib/supabase/server";
+import { DEFAULT_SITE_THEME } from "@/lib/theme/default-site-theme";
 
 function text(
   formData: FormData,
@@ -68,8 +69,11 @@ export async function updateSiteSettings(
     redirect("/admin/login");
   }
 
-  const siteFolder = `nelled-business/${currentTenant.tenant.slug}/site`;
-  const brandFolder = `nelled-business/${currentTenant.tenant.slug}/brand`;
+  const siteFolder =
+    `nelled-business/${currentTenant.tenant.slug}/site`;
+
+  const brandFolder =
+    `nelled-business/${currentTenant.tenant.slug}/brand`;
 
   const heroFile = getFile(
     formData,
@@ -177,19 +181,22 @@ export async function updateSiteSettings(
     text(
       formData,
       "primary_color",
-    ) ?? "#0b3b6f";
+    ) ??
+    DEFAULT_SITE_THEME.primary;
 
   payload.secondary_color =
     text(
       formData,
       "secondary_color",
-    ) ?? "#ffffff";
+    ) ??
+    DEFAULT_SITE_THEME.background;
 
   payload.accent_color =
     text(
       formData,
       "accent_color",
-    ) ?? "#f59e42";
+    ) ??
+    DEFAULT_SITE_THEME.accent;
 
   payload.instagram_username =
     instagram;
@@ -255,5 +262,50 @@ export async function updateSiteSettings(
 
   redirect(
     "/admin/site?success=Site atualizado com sucesso",
+  );
+}
+
+export async function resetSiteTheme() {
+  const currentTenant =
+    await getCurrentTenant();
+
+  if (!currentTenant) {
+    redirect("/admin/login");
+  }
+
+  const supabase =
+    await createClient();
+
+  const { error } = await supabase
+    .from("tenant_settings")
+    .update({
+      primary_color:
+        DEFAULT_SITE_THEME.primary,
+
+      secondary_color:
+        DEFAULT_SITE_THEME.background,
+
+      accent_color:
+        DEFAULT_SITE_THEME.accent,
+    })
+    .eq(
+      "tenant_id",
+      currentTenant.tenant.id,
+    );
+
+  if (error) {
+    redirect(
+      `/admin/site?error=${encodeURIComponent(
+        error.message,
+      )}`,
+    );
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/site");
+
+  redirect(
+    "/admin/site?success=Tema padrão restaurado",
   );
 }

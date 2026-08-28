@@ -19,13 +19,43 @@ function normalizeHostname(
     .replace(/\/$/, "");
 }
 
+function isPrivateNetworkIp(hostname: string) {
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+
+  const match = hostname.match(
+    /^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/,
+  );
+
+  if (match) {
+    const secondOctet = Number(match[1]);
+
+    return (
+      secondOctet >= 16 &&
+      secondOctet <= 31
+    );
+  }
+
+  return false;
+}
+
 function shouldUseDefaultTenant(
   hostname: string,
 ) {
   return (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
-    hostname.endsWith(".vercel.app")
+    hostname.endsWith(".vercel.app") ||
+    (
+      process.env.NODE_ENV ===
+        "development" &&
+      isPrivateNetworkIp(hostname)
+    )
   );
 }
 
