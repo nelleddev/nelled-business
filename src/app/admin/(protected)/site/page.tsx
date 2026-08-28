@@ -38,6 +38,10 @@ type ExtendedTenantSettings =
 
     about_image_url?: string | null;
 
+    about_highlight_1?: string | null;
+    about_highlight_2?: string | null;
+    about_highlight_3?: string | null;
+
     instagram_username?: string | null;
     facebook_username?: string | null;
     tiktok_username?: string | null;
@@ -543,14 +547,12 @@ export default async function SitePage({
           title="Sobre"
           description="Apresente a empresa ou profissional ao visitante."
         >
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div className="space-y-5">
               <Field
                 name="about_title"
                 title="Título"
-                value={
-                  settings.about_title
-                }
+                value={settings.about_title}
               />
 
               <label className={label}>
@@ -560,12 +562,52 @@ export default async function SitePage({
                   name="about_content"
                   rows={7}
                   defaultValue={
-                    settings.about_content ??
-                    ""
+                    settings.about_content ?? ""
                   }
                   className={input}
                 />
               </label>
+
+              <div className="border-t border-slate-200 pt-5">
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-slate-800">
+                    Destaques
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Pequenos diferenciais exibidos abaixo do texto da seção Sobre.
+                  </p>
+                </div>
+
+                <div className="grid gap-4">
+                  <Field
+                    name="about_highlight_1"
+                    title="Destaque 1"
+                    value={
+                      settings.about_highlight_1
+                    }
+                    placeholder="Orçamento sem compromisso"
+                  />
+
+                  <Field
+                    name="about_highlight_2"
+                    title="Destaque 2"
+                    value={
+                      settings.about_highlight_2
+                    }
+                    placeholder="Materiais de qualidade"
+                  />
+
+                  <Field
+                    name="about_highlight_3"
+                    title="Destaque 3"
+                    value={
+                      settings.about_highlight_3
+                    }
+                    placeholder="Prazo combinado em contrato"
+                  />
+                </div>
+              </div>
             </div>
 
             <label className={label}>
@@ -580,13 +622,11 @@ export default async function SitePage({
 
               {settings.about_image_url && (
                 <Image
-                  src={
-                    settings.about_image_url
-                  }
+                  src={settings.about_image_url}
                   alt="Imagem atual da seção Sobre"
-                  width={500}
-                  height={500}
-                  className="mt-4 h-64 w-full rounded-xl object-cover"
+                  width={420}
+                  height={525}
+                  className="mt-4 aspect-[4/5] w-full max-w-[320px] rounded-lg object-cover"
                 />
               )}
             </label>

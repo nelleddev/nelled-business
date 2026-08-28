@@ -37,12 +37,10 @@ export function FaqAccordion({
           >
             <button
               type="button"
-              onClick={() =>
-                toggle(item.id)
-              }
+              onClick={() => toggle(item.id)}
               aria-expanded={isOpen}
               aria-controls={`faq-answer-${item.id}`}
-              className="flex w-full items-center justify-between gap-6 text-left font-semibold text-[var(--foreground)] transition hover:text-[var(--accent)]"
+              className="flex w-full cursor-pointer items-center justify-between gap-6 text-left font-semibold text-[var(--foreground)] transition hover:text-[var(--accent)]"
             >
               <span>
                 {item.question}

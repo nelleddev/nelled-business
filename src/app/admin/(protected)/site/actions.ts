@@ -145,30 +145,37 @@ export async function updateSiteSettings(
     {};
 
   const textFields = [
-    "company_name",
-    "short_name",
-    "slogan",
-    "whatsapp",
-    "email",
-    "city",
-    "state",
-    "service_area",
-    "service_cities",
-    "hero_eyebrow",
-    "hero_title",
-    "hero_description",
-    "hero_secondary_text",
-    "stat_1_value",
-    "stat_1_label",
-    "stat_2_value",
-    "stat_2_label",
-    "stat_3_value",
-    "stat_3_label",
-    "about_title",
-    "about_content",
-    "seo_title",
-    "seo_description",
-  ] as const;
+  "company_name",
+  "short_name",
+  "slogan",
+  "whatsapp",
+  "email",
+  "city",
+  "state",
+  "service_area",
+  "service_cities",
+
+  "hero_eyebrow",
+  "hero_title",
+  "hero_description",
+  "hero_secondary_text",
+
+  "stat_1_value",
+  "stat_1_label",
+  "stat_2_value",
+  "stat_2_label",
+  "stat_3_value",
+  "stat_3_label",
+
+  "about_title",
+  "about_content",
+  "about_highlight_1",
+  "about_highlight_2",
+  "about_highlight_3",
+
+  "seo_title",
+  "seo_description",
+] as const;
 
   for (const field of textFields) {
     payload[field] = text(

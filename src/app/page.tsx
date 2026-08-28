@@ -24,6 +24,8 @@ import {
   type PublicGalleryItem,
 } from "@/components/public/gallery";
 import { MobileMenu } from "@/components/public/mobile-menu";
+import { ReviewForm } from "@/components/public/review-form";
+import { ScrollToTop } from "@/components/public/scroll-to-top";
 import { SiteLiveRefresh } from "@/components/public/site-live-refresh";
 import { ServiceIcon } from "@/components/service-icon";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -55,6 +57,10 @@ type ExtendedTenantSettings =
     service_cities?: string | null;
 
     about_image_url?: string | null;
+
+    about_highlight_1?: string | null;
+    about_highlight_2?: string | null;
+    about_highlight_3?: string | null;
 
     tiktok_url?: string | null;
   };
@@ -108,7 +114,9 @@ type Stat = {
   label: string | null | undefined;
 };
 
-function hexToRgb(hex: string) {
+function hexToRgb(
+  hex: string,
+) {
   let value = hex
     .replace("#", "")
     .trim();
@@ -151,7 +159,9 @@ function hexToRgb(hex: string) {
   };
 }
 
-function isDarkColor(hex: string) {
+function isDarkColor(
+  hex: string,
+) {
   const {
     r,
     g,
@@ -541,7 +551,7 @@ export default async function Home() {
       ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(
           whatsappMessage,
         )}`
-      : "#orcamento";
+      : "#contato";
 
   const stats = [
     {
@@ -578,6 +588,26 @@ export default async function Home() {
       : stats.length === 2
         ? "grid-cols-2"
         : "grid-cols-1";
+
+  const reviewGridClass =
+    reviews.length === 1
+      ? "max-w-[480px]"
+      : reviews.length === 2
+        ? "grid md:grid-cols-2"
+        : "grid md:grid-cols-2 lg:grid-cols-3";
+
+  const aboutHighlights = [
+    settings?.about_highlight_1,
+    settings?.about_highlight_2,
+    settings?.about_highlight_3,
+  ].filter(
+    (
+      item,
+    ): item is string =>
+      typeof item ===
+        "string" &&
+      item.trim().length > 0,
+  );
 
   const cssVariables = {
     "--brand": primary,
@@ -623,9 +653,8 @@ export default async function Home() {
       {/* NAVBAR */}
       <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--background)]">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-5 px-6">
-          <a
-            href="#topo"
-            aria-label={`Ir para o início do site da ${company}`}
+          <ScrollToTop
+            ariaLabel={`Ir para o início do site da ${company}`}
             className="shrink-0"
           >
             {settings?.logo_light_url ? (
@@ -643,7 +672,7 @@ export default async function Home() {
                 {company}
               </strong>
             )}
-          </a>
+          </ScrollToTop>
 
           {/* MENU DESKTOP */}
           <DesktopNav />
@@ -676,7 +705,7 @@ export default async function Home() {
 
       {/* HERO */}
       <section
-        id="topo"
+        id="inicio"
         className="hero-grid scroll-mt-20 border-b border-[var(--border)] bg-[var(--background)]"
       >
         <div className="mx-auto grid min-h-[610px] max-w-6xl items-center gap-12 px-6 py-14 lg:grid-cols-[1.05fr_.95fr] lg:gap-16 lg:py-16">
@@ -961,14 +990,14 @@ export default async function Home() {
           className="scroll-mt-20 bg-[var(--background)] py-16 sm:py-20"
         >
           <div
-            className={`mx-auto grid max-w-6xl items-center gap-12 px-6 ${
+            className={`mx-auto grid max-w-6xl items-center gap-10 px-6 lg:gap-16 ${
               settings?.about_image_url
-                ? "md:grid-cols-[0.8fr_1.2fr]"
+                ? "md:grid-cols-[320px_minmax(0,1fr)]"
                 : ""
             }`}
           >
             {settings?.about_image_url && (
-              <div className="relative">
+              <div className="relative mx-auto w-full max-w-[320px]">
                 <div className="absolute -inset-3 -z-10 rounded-xl bg-[var(--accent)]/10" />
 
                 <Image
@@ -979,9 +1008,9 @@ export default async function Home() {
                     settings.about_title ??
                     `Sobre ${company}`
                   }
-                  width={600}
-                  height={750}
-                  sizes="(max-width: 768px) 100vw, 40vw"
+                  width={480}
+                  height={600}
+                  sizes="(max-width: 768px) 100vw, 320px"
                   className="aspect-[4/5] w-full rounded-lg object-cover shadow-md shadow-black/10"
                 />
               </div>
@@ -998,24 +1027,30 @@ export default async function Home() {
               </h2>
 
               {settings?.about_content && (
-                <p className="mt-5 whitespace-pre-line text-base leading-8 text-[var(--muted)] sm:text-lg">
+                <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-8 text-[var(--muted)] sm:text-lg">
                   {
                     settings.about_content
                   }
                 </p>
               )}
 
-              {whatsapp && (
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-7 inline-flex items-center gap-2 rounded-md bg-[var(--accent)] px-5 py-3 font-semibold text-[var(--accent-foreground)] transition hover:-translate-y-0.5 hover:opacity-90"
-                >
-                  <FaWhatsapp />
-
-                  Falar pelo WhatsApp
-                </a>
+              {aboutHighlights.length >
+                0 && (
+                <div className="mt-6 flex flex-wrap gap-2.5">
+                  {aboutHighlights.map(
+                    (
+                      highlight,
+                      index,
+                    ) => (
+                      <span
+                        key={`${highlight}-${index}`}
+                        className="rounded-full border border-[var(--border)] bg-[var(--background-alt)] px-4 py-2 font-mono text-xs font-medium text-[var(--foreground)]"
+                      >
+                        {highlight}
+                      </span>
+                    ),
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -1023,89 +1058,97 @@ export default async function Home() {
       )}
 
       {/* AVALIAÇÕES */}
-      {reviews.length > 0 && (
-        <section className="bg-[var(--background-alt)] py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-6">
+      <section
+        id="avaliacoes"
+        className="scroll-mt-20 bg-[var(--background-alt)] py-14 sm:py-16"
+      >
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <SectionHeading
               eyebrow="CLIENTES"
               title="O que nossos clientes dizem"
-              description="Avaliações de clientes que já contrataram nossos serviços."
+              description="Confira avaliações de clientes ou compartilhe sua experiência com nossos serviços."
             />
 
-            <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {reviews
-                .slice(0, 6)
-                .map(
-                  (review) => {
-                    const rating =
-                      Math.max(
-                        0,
-                        Math.min(
-                          review.rating,
-                          5,
-                        ),
-                      );
-
-                    return (
-                      <article
-                        key={
-                          review.id
-                        }
-                        className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-6"
-                      >
-                        <div className="flex gap-1 text-[var(--accent)]">
-                          {Array.from({
-                            length:
-                              rating,
-                          }).map(
-                            (
-                              _,
-                              index,
-                            ) => (
-                              <Star
-                                key={
-                                  index
-                                }
-                                size={
-                                  17
-                                }
-                                fill="currentColor"
-                              />
-                            ),
-                          )}
-                        </div>
-
-                        <p className="mt-5 leading-7 text-[var(--surface-muted)]">
-                          “
-                          {
-                            review.comment
-                          }
-                          ”
-                        </p>
-
-                        <div className="mt-6 border-t border-[var(--border)] pt-4">
-                          <strong className="block text-[var(--surface-foreground)]">
-                            {
-                              review.customer_name
-                            }
-                          </strong>
-
-                          {review.city && (
-                            <span className="mt-1 block text-sm text-[var(--surface-muted)]">
-                              {
-                                review.city
-                              }
-                            </span>
-                          )}
-                        </div>
-                      </article>
-                    );
-                  },
-                )}
+            <div className="shrink-0">
+              <ReviewForm />
             </div>
           </div>
-        </section>
-      )}
+
+          {reviews.length > 0 ? (
+            <div
+              className={`mt-10 gap-5 ${reviewGridClass}`}
+            >
+              {reviews
+                .slice(0, 6)
+                .map((review) => {
+                  const rating =
+                    Math.max(
+                      0,
+                      Math.min(
+                        review.rating,
+                        5,
+                      ),
+                    );
+
+                  return (
+                    <article
+                      key={review.id}
+                      className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-6"
+                    >
+                      <div className="flex gap-1 text-[var(--accent)]">
+                        {Array.from({
+                          length: rating,
+                        }).map(
+                          (_, index) => (
+                            <Star
+                              key={index}
+                              size={17}
+                              fill="currentColor"
+                            />
+                          ),
+                        )}
+                      </div>
+
+                      <p className="mt-5 leading-7 text-[var(--surface-muted)]">
+                        “{review.comment}”
+                      </p>
+
+                      <div className="mt-6 border-t border-[var(--border)] pt-4">
+                        <strong className="block text-[var(--surface-foreground)]">
+                          {
+                            review.customer_name
+                          }
+                        </strong>
+
+                        {review.city && (
+                          <span className="mt-1 block text-sm text-[var(--surface-muted)]">
+                            {review.city}
+                          </span>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="mt-10 rounded-md border border-dashed border-[var(--border)] px-6 py-10 text-center">
+              <Star
+                size={28}
+                className="mx-auto text-[var(--accent)]"
+              />
+
+              <p className="mt-4 font-semibold text-[var(--foreground)]">
+                Ainda não há avaliações publicadas
+              </p>
+
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Seja o primeiro cliente a compartilhar sua experiência.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* FAQ */}
       {faq.length > 0 && (
@@ -1131,7 +1174,7 @@ export default async function Home() {
       {/* ORÇAMENTO */}
       {form && whatsapp && (
         <section
-          id="orcamento"
+          id="contato"
           className="scroll-mt-20 bg-[var(--brand)] py-14 sm:py-16"
         >
           <div className="mx-auto grid max-w-5xl gap-10 px-6 lg:grid-cols-[1fr_420px] lg:items-start lg:gap-14">
@@ -1151,7 +1194,6 @@ export default async function Home() {
                   }
                 </p>
               )}
-
             </div>
 
             <form
@@ -1265,21 +1307,26 @@ export default async function Home() {
       <footer className="border-t border-[var(--brand-border)] bg-[var(--brand)]">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 px-6 py-7 text-center sm:flex-row sm:justify-between sm:text-left">
           <div className="flex items-center">
-            {settings?.logo_light_url ? (
-              <Image
-                src={
-                  settings.logo_light_url
-                }
-                alt={company}
-                width={140}
-                height={55}
-                className="h-9 w-auto max-w-[150px] object-contain"
-              />
-            ) : (
-              <strong className="font-display text-base text-[var(--brand-foreground)]">
-                {company}
-              </strong>
-            )}
+            <ScrollToTop
+              ariaLabel={`Ir para o início do site da ${company}`}
+              className="shrink-0"
+            >
+              {settings?.logo_light_url ? (
+                <Image
+                  src={
+                    settings.logo_light_url
+                  }
+                  alt={company}
+                  width={140}
+                  height={55}
+                  className="h-9 w-auto max-w-[150px] object-contain"
+                />
+              ) : (
+                <strong className="font-display text-base text-[var(--brand-foreground)]">
+                  {company}
+                </strong>
+              )}
+            </ScrollToTop>
           </div>
 
           <p className="text-xs text-[var(--brand-muted)] sm:text-sm">
