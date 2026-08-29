@@ -1,6 +1,7 @@
 import type {
   CSSProperties,
   InputHTMLAttributes,
+  ReactNode,
 } from "react";
 import {
   FaFacebookF,
@@ -95,10 +96,19 @@ type ContactFormSettings = {
   title: string;
   description: string | null;
 
+  name_label: string;
   name_placeholder: string;
+
+  whatsapp_label: string;
   whatsapp_placeholder: string;
+
+  location_label: string;
   location_placeholder: string;
+
+  service_label: string;
   service_placeholder: string;
+
+  message_label: string;
   message_placeholder: string;
 
   submit_button_text: string;
@@ -382,10 +392,15 @@ export default async function Home() {
         `
           title,
           description,
+          name_label,
           name_placeholder,
+          whatsapp_label,
           whatsapp_placeholder,
+          location_label,
           location_placeholder,
+          service_label,
           service_placeholder,
+          message_label,
           message_placeholder,
           submit_button_text,
           whatsapp_intro_message
@@ -1122,7 +1137,7 @@ export default async function Home() {
 
             <form
               action={submitLead}
-              className="grid w-full gap-3 lg:max-w-[420px]"
+              className="grid w-full gap-4 lg:max-w-[420px]"
             >
               <input
                 type="hidden"
@@ -1144,79 +1159,115 @@ export default async function Home() {
                 }
               />
 
-              <Input
-                name="name"
-                autoComplete="name"
-                placeholder={
-                  form.name_placeholder ||
-                  "Seu nome"
+              <PublicField
+                label={
+                  form.name_label ||
+                  "Nome"
                 }
-              />
+              >
+                <Input
+                  name="name"
+                  autoComplete="name"
+                  placeholder={
+                    form.name_placeholder ||
+                    "Seu nome"
+                  }
+                />
+              </PublicField>
 
-              <Input
-                name="whatsapp"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder={
-                  form.whatsapp_placeholder ||
-                  "WhatsApp com DDD"
+              <PublicField
+                label={
+                  form.whatsapp_label ||
+                  "WhatsApp"
                 }
-              />
+              >
+                <Input
+                  name="whatsapp"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder={
+                    form.whatsapp_placeholder ||
+                    "WhatsApp com DDD"
+                  }
+                />
+              </PublicField>
 
-              <Input
-                name="location"
-                placeholder={
-                  form.location_placeholder ||
+              <PublicField
+                label={
+                  form.location_label ||
                   "Cidade / bairro"
                 }
-              />
-
-              <select
-                name="service_id"
-                defaultValue=""
-                className="w-full rounded-md border border-[var(--brand-border)] bg-[var(--brand-field)] px-4 py-3 text-sm text-[var(--brand-foreground)] outline-none transition focus:border-[var(--brand-foreground)]"
               >
-                <option
-                  value=""
-                  className="bg-white text-slate-900"
-                >
-                  {form.service_placeholder ||
-                    "Tipo de serviço"}
-                </option>
+                <Input
+                  name="location"
+                  placeholder={
+                    form.location_placeholder ||
+                    "Cidade / bairro"
+                  }
+                />
+              </PublicField>
 
-                {services.map(
-                  (service) => (
-                    <option
-                      key={
-                        service.id
-                      }
-                      value={
-                        service.id
-                      }
-                      className="bg-white text-slate-900"
-                    >
-                      {
-                        service.name
-                      }
-                    </option>
-                  ),
-                )}
-              </select>
-
-              <textarea
-                name="message"
-                rows={3}
-                placeholder={
-                  form.message_placeholder ||
-                  "Conte um pouco sobre o que você precisa"
+              <PublicField
+                label={
+                  form.service_label ||
+                  "Tipo de serviço"
                 }
-                className="w-full resize-y rounded-md border border-[var(--brand-border)] bg-[var(--brand-field)] px-4 py-3 text-sm text-[var(--brand-foreground)] outline-none transition placeholder:text-[var(--brand-muted)] focus:border-[var(--brand-foreground)]"
-              />
+              >
+                <select
+                  name="service_id"
+                  defaultValue=""
+                  className="w-full rounded-md border border-[var(--brand-border)] bg-[var(--brand-field)] px-4 py-3 text-sm text-[var(--brand-foreground)] outline-none transition focus:border-[var(--brand-foreground)]"
+                >
+                  <option
+                    value=""
+                    className="bg-white text-slate-900"
+                  >
+                    {form.service_placeholder ||
+                      "Tipo de serviço"}
+                  </option>
+
+                  {services.map(
+                    (service) => (
+                      <option
+                        key={
+                          service.id
+                        }
+                        value={
+                          service.id
+                        }
+                        className="bg-white text-slate-900"
+                      >
+                        {
+                          service.name
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+              </PublicField>
+
+              <PublicField
+                label={
+                  form.message_label ||
+                  "Mensagem"
+                }
+              >
+                <textarea
+                  name="message"
+                  rows={3}
+                  placeholder={
+                    form.message_placeholder ||
+                    "Conte um pouco sobre o que você precisa"
+                  }
+                  className="w-full resize-y rounded-md border border-[var(--brand-border)] bg-[var(--brand-field)] px-4 py-3 text-sm text-[var(--brand-foreground)] outline-none transition placeholder:text-[var(--brand-muted)] focus:border-[var(--brand-foreground)]"
+                />
+              </PublicField>
 
               <button
                 type="submit"
                 className="button-hover mt-1 inline-flex w-fit cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent-foreground)]"
               >
+                <FaWhatsapp className="text-base" />
 
                 {form.submit_button_text ||
                   "Enviar e continuar no WhatsApp"}
@@ -1349,6 +1400,24 @@ function SectionHeading({
         </p>
       )}
     </div>
+  );
+}
+
+function PublicField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="grid gap-1.5">
+      <span className="text-xs font-medium text-[var(--brand-muted)]">
+        {label}
+      </span>
+
+      {children}
+    </label>
   );
 }
 

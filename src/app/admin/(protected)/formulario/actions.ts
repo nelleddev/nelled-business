@@ -8,27 +8,91 @@ import { getCurrentTenant } from "@/lib/auth/get-current-tenant";
 import { createClient } from "@/lib/supabase/server";
 
 const schema = z.object({
-  title: z.string().trim().min(2).max(150),
-  description: z.string().trim().min(2).max(500),
+  title: z
+    .string()
+    .trim()
+    .min(2)
+    .max(150),
 
-  name_label: z.string().trim().min(1).max(80),
-  name_placeholder: z.string().trim().min(1).max(120),
+  description: z
+    .string()
+    .trim()
+    .min(2)
+    .max(500),
 
-  whatsapp_label: z.string().trim().min(1).max(80),
-  whatsapp_placeholder: z.string().trim().min(1).max(120),
+  name_label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80),
 
-  location_label: z.string().trim().min(1).max(80),
-  location_placeholder: z.string().trim().min(1).max(120),
+  name_placeholder: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120),
 
-  service_label: z.string().trim().min(1).max(80),
-  service_placeholder: z.string().trim().min(1).max(120),
+  whatsapp_label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80),
 
-  message_label: z.string().trim().min(1).max(80),
-  message_placeholder: z.string().trim().min(1).max(250),
+  whatsapp_placeholder: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120),
 
-  submit_button_text: z.string().trim().min(1).max(120),
+  location_label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80),
 
-  whatsapp_intro_message: z.string().trim().min(1).max(1000),
+  location_placeholder: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120),
+
+  service_label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80),
+
+  service_placeholder: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120),
+
+  message_label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80),
+
+  message_placeholder: z
+    .string()
+    .trim()
+    .min(1)
+    .max(250),
+
+  submit_button_text: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120),
+
+  whatsapp_intro_message: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1000),
+
+  is_active: z.boolean(),
 });
 
 export async function updateContactForm(
@@ -41,29 +105,103 @@ export async function updateContactForm(
     redirect("/admin/login");
   }
 
-  const raw = Object.fromEntries(
-    [
-      "title",
-      "description",
-      "name_label",
-      "name_placeholder",
-      "whatsapp_label",
-      "whatsapp_placeholder",
-      "location_label",
-      "location_placeholder",
-      "service_label",
-      "service_placeholder",
-      "message_label",
-      "message_placeholder",
-      "submit_button_text",
-      "whatsapp_intro_message",
-    ].map((key) => [
-      key,
-      String(formData.get(key) ?? ""),
-    ]),
-  );
+  const raw = {
+    title: String(
+      formData.get("title") ?? "",
+    ),
 
-  const parsed = schema.safeParse(raw);
+    description: String(
+      formData.get(
+        "description",
+      ) ?? "",
+    ),
+
+    name_label: String(
+      formData.get(
+        "name_label",
+      ) ?? "",
+    ),
+
+    name_placeholder: String(
+      formData.get(
+        "name_placeholder",
+      ) ?? "",
+    ),
+
+    whatsapp_label: String(
+      formData.get(
+        "whatsapp_label",
+      ) ?? "",
+    ),
+
+    whatsapp_placeholder:
+      String(
+        formData.get(
+          "whatsapp_placeholder",
+        ) ?? "",
+      ),
+
+    location_label: String(
+      formData.get(
+        "location_label",
+      ) ?? "",
+    ),
+
+    location_placeholder:
+      String(
+        formData.get(
+          "location_placeholder",
+        ) ?? "",
+      ),
+
+    service_label: String(
+      formData.get(
+        "service_label",
+      ) ?? "",
+    ),
+
+    service_placeholder:
+      String(
+        formData.get(
+          "service_placeholder",
+        ) ?? "",
+      ),
+
+    message_label: String(
+      formData.get(
+        "message_label",
+      ) ?? "",
+    ),
+
+    message_placeholder:
+      String(
+        formData.get(
+          "message_placeholder",
+        ) ?? "",
+      ),
+
+    submit_button_text:
+      String(
+        formData.get(
+          "submit_button_text",
+        ) ?? "",
+      ),
+
+    whatsapp_intro_message:
+      String(
+        formData.get(
+          "whatsapp_intro_message",
+        ) ?? "",
+      ),
+
+    is_active:
+      formData.get(
+        "is_active",
+      ) === "on",
+  };
+
+  const parsed =
+    schema.safeParse(raw);
 
   if (!parsed.success) {
     redirect(
@@ -73,17 +211,21 @@ export async function updateContactForm(
     );
   }
 
-  const supabase = await createClient();
+  const supabase =
+    await createClient();
 
-  const { error } = await supabase
-    .from(
-      "tenant_contact_form_settings",
-    )
-    .update(parsed.data)
-    .eq(
-      "tenant_id",
-      currentTenant.tenant.id,
-    );
+  const { error } =
+    await supabase
+      .from(
+        "tenant_contact_form_settings",
+      )
+      .update(
+        parsed.data,
+      )
+      .eq(
+        "tenant_id",
+        currentTenant.tenant.id,
+      );
 
   if (error) {
     redirect(
@@ -94,9 +236,14 @@ export async function updateContactForm(
   }
 
   revalidatePath("/");
-  revalidatePath("/admin/formulario");
+  revalidatePath("/admin");
+  revalidatePath(
+    "/admin/formulario",
+  );
 
   redirect(
-    "/admin/formulario?success=Formulário atualizado",
+    `/admin/formulario?success=${encodeURIComponent(
+      "Formulário atualizado com sucesso.",
+    )}`,
   );
 }
