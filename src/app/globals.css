@@ -114,3 +114,33 @@ h6 {
     animation: none;
   }
 }
+
+.button-hover {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.button-hover:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 22px
+      color-mix(
+        in srgb,
+        var(--accent) 28%,
+        transparent
+      );
+  filter: brightness(1.06);
+}
+
+.button-hover:active {
+  transform: translateY(0);
+  box-shadow:
+    0 4px 10px
+      color-mix(
+        in srgb,
+        var(--accent) 18%,
+        transparent
+      );
+}

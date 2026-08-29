@@ -8,10 +8,7 @@ import {
   FaTiktok,
   FaWhatsapp,
 } from "react-icons/fa";
-import {
-  MapPin,
-  Star,
-} from "lucide-react";
+import { MapPin } from "lucide-react";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -25,6 +22,10 @@ import {
 } from "@/components/public/gallery";
 import { MobileMenu } from "@/components/public/mobile-menu";
 import { ReviewForm } from "@/components/public/review-form";
+import {
+  ReviewsGrid,
+  type PublicReview,
+} from "@/components/public/reviews-grid";
 import { ScrollToTop } from "@/components/public/scroll-to-top";
 import { SiteLiveRefresh } from "@/components/public/site-live-refresh";
 import { ServiceIcon } from "@/components/service-icon";
@@ -80,12 +81,7 @@ type BeforeAfterItem = {
   after_image_url: string;
 };
 
-type Review = {
-  id: string;
-  customer_name: string;
-  city: string | null;
-  rating: number;
-  comment: string;
+type Review = PublicReview & {
   is_featured: boolean;
 };
 
@@ -351,6 +347,12 @@ export default async function Home() {
         {
           ascending: false,
         },
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false,
+        },
       ),
 
     db
@@ -589,13 +591,6 @@ export default async function Home() {
         ? "grid-cols-2"
         : "grid-cols-1";
 
-  const reviewGridClass =
-    reviews.length === 1
-      ? "max-w-[480px]"
-      : reviews.length === 2
-        ? "grid md:grid-cols-2"
-        : "grid md:grid-cols-2 lg:grid-cols-3";
-
   const aboutHighlights = [
     settings?.about_highlight_1,
     settings?.about_highlight_2,
@@ -674,16 +669,14 @@ export default async function Home() {
             )}
           </ScrollToTop>
 
-          {/* MENU DESKTOP */}
           <DesktopNav />
 
-          {/* WHATSAPP DESKTOP */}
           {whatsapp && (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
-              className="hidden items-center gap-2 rounded-md bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:-translate-y-0.5 hover:opacity-90 lg:flex"
+              className="button-hover hidden items-center gap-2 rounded-md bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] lg:flex"
             >
               <FaWhatsapp className="text-lg" />
 
@@ -691,7 +684,6 @@ export default async function Home() {
             </a>
           )}
 
-          {/* MENU MOBILE */}
           <MobileMenu
             whatsappUrl={
               whatsappUrl
@@ -737,6 +729,7 @@ export default async function Home() {
               </p>
             )}
 
+            {/* BOTÕES HERO */}
             <div className="mt-7 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
               <a
                 href={whatsappUrl}
@@ -750,7 +743,7 @@ export default async function Home() {
                     ? "noreferrer"
                     : undefined
                 }
-                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-2.5 text-center text-xs font-semibold leading-4 text-[var(--accent-foreground)] transition hover:-translate-y-0.5 hover:opacity-90 sm:min-h-0 sm:gap-2 sm:px-6 sm:py-3.5 sm:text-base"
+                className="button-hover inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-2.5 text-center text-xs font-semibold leading-4 text-[var(--accent-foreground)] sm:min-h-0 sm:gap-2 sm:px-6 sm:py-3.5 sm:text-base"
               >
                 {whatsapp && (
                   <FaWhatsapp className="shrink-0 text-sm sm:text-base" />
@@ -763,12 +756,13 @@ export default async function Home() {
 
               <a
                 href="#trabalhos"
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--foreground)] bg-transparent px-3 py-2.5 text-center text-xs font-semibold leading-4 text-[var(--foreground)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--surface)] hover:text-[var(--accent)] sm:min-h-0 sm:px-6 sm:py-3.5 sm:text-base"
+                className="button-hover inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--foreground)] bg-transparent px-3 py-2.5 text-center text-xs font-semibold leading-4 text-[var(--foreground)] hover:border-[var(--accent)] hover:bg-[var(--surface)] hover:text-[var(--accent)] sm:min-h-0 sm:px-6 sm:py-3.5 sm:text-base"
               >
                 Ver trabalhos
               </a>
             </div>
 
+            {/* INDICADORES */}
             {stats.length > 0 && (
               <div
                 className={`mt-8 grid max-w-xl ${statsGridColumns} gap-x-5 gap-y-4 border-t border-[var(--border)] pt-6 sm:gap-5 sm:pt-8`}
@@ -800,6 +794,7 @@ export default async function Home() {
             )}
           </div>
 
+          {/* IMAGEM HERO */}
           <div className="relative">
             {settings?.hero_image_url ? (
               <>
@@ -819,9 +814,7 @@ export default async function Home() {
               </>
             ) : (
               <div className="flex aspect-[4/3] items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-8 text-center text-sm text-[var(--surface-muted)]">
-                Adicione uma imagem do
-                Hero no painel
-                administrativo.
+                Adicione uma imagem do Hero no painel administrativo.
               </div>
             )}
           </div>
@@ -1075,78 +1068,9 @@ export default async function Home() {
             </div>
           </div>
 
-          {reviews.length > 0 ? (
-            <div
-              className={`mt-10 gap-5 ${reviewGridClass}`}
-            >
-              {reviews
-                .slice(0, 6)
-                .map((review) => {
-                  const rating =
-                    Math.max(
-                      0,
-                      Math.min(
-                        review.rating,
-                        5,
-                      ),
-                    );
-
-                  return (
-                    <article
-                      key={review.id}
-                      className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-6"
-                    >
-                      <div className="flex gap-1 text-[var(--accent)]">
-                        {Array.from({
-                          length: rating,
-                        }).map(
-                          (_, index) => (
-                            <Star
-                              key={index}
-                              size={17}
-                              fill="currentColor"
-                            />
-                          ),
-                        )}
-                      </div>
-
-                      <p className="mt-5 leading-7 text-[var(--surface-muted)]">
-                        “{review.comment}”
-                      </p>
-
-                      <div className="mt-6 border-t border-[var(--border)] pt-4">
-                        <strong className="block text-[var(--surface-foreground)]">
-                          {
-                            review.customer_name
-                          }
-                        </strong>
-
-                        {review.city && (
-                          <span className="mt-1 block text-sm text-[var(--surface-muted)]">
-                            {review.city}
-                          </span>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-            </div>
-          ) : (
-            <div className="mt-10 rounded-md border border-dashed border-[var(--border)] px-6 py-10 text-center">
-              <Star
-                size={28}
-                className="mx-auto text-[var(--accent)]"
-              />
-
-              <p className="mt-4 font-semibold text-[var(--foreground)]">
-                Ainda não há avaliações publicadas
-              </p>
-
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                Seja o primeiro cliente a compartilhar sua experiência.
-              </p>
-            </div>
-          )}
+          <ReviewsGrid
+            reviews={reviews}
+          />
         </div>
       </section>
 
@@ -1291,9 +1215,8 @@ export default async function Home() {
 
               <button
                 type="submit"
-                className="mt-1 inline-flex w-fit cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:-translate-y-0.5 hover:opacity-90"
+                className="button-hover mt-1 inline-flex w-fit cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent-foreground)]"
               >
-                <FaWhatsapp />
 
                 {form.submit_button_text ||
                   "Enviar e continuar no WhatsApp"}
@@ -1331,8 +1254,8 @@ export default async function Home() {
 
           <p className="text-xs text-[var(--brand-muted)] sm:text-sm">
             © {CURRENT_YEAR}{" "}
-            {company}. Todos os
-            direitos reservados.
+            {company}. Todos os direitos
+            reservados.
           </p>
 
           <div className="flex items-center gap-5 text-[var(--brand-muted)]">
